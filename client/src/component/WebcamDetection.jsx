@@ -87,7 +87,7 @@ export default function WebcamDetection() {
 
     setStatus(newStatus);
     sendStatus(newStatus);
-  }, []);
+  }, [sendStatus]);
 
   // ✅ LOAD MODEL
   useEffect(() => {
