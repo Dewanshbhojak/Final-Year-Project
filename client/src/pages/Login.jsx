@@ -18,6 +18,7 @@ const Login = () => {
 
     try {
       const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
       const response = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -30,13 +31,10 @@ const Login = () => {
         throw new Error(data.message || 'Login failed');
       }
 
-      // Save token to local storage
       if (data.token) {
         localStorage.setItem('token', data.token);
       }
-      
-      // We could save a token here in local storage if we had one
-      // localStorage.setItem('user', JSON.stringify(data.user));
+
       navigate('/dashboard');
     } catch (err) {
       setError(err.message);
@@ -55,7 +53,11 @@ const Login = () => {
           Enter your credentials to access your account
         </p>
         
-        {error && <div className="mt-4 rounded bg-red-100 p-3 text-sm text-red-600">{error}</div>}
+        {error && (
+          <div className="mt-4 rounded bg-red-100 p-3 text-sm text-red-600">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="mt-4">
           <div className="mt-6">
@@ -74,9 +76,14 @@ const Login = () => {
           <div className="mt-4">
             <div className="flex items-center justify-between">
               <label className="font-semibold">Password</label>
-              <a href="#" className="text-sm text-blue-600 hover:underline">
+
+              {/* ✅ FIXED (no more href="#") */}
+              <Link
+                to="/forgot-password"
+                className="text-sm text-blue-600 hover:underline"
+              >
                 Forgot password?
-              </a>
+              </Link>
             </div>
 
             <input
@@ -92,24 +99,35 @@ const Login = () => {
             />
           </div>
 
-          <button type="submit" className="mt-6 h-10 w-full rounded-xl bg-black text-lg text-white transition hover:bg-gray-900">
+          <button
+            type="submit"
+            className="mt-6 h-10 w-full rounded-xl bg-black text-lg text-white transition hover:bg-gray-900"
+          >
             Sign In
           </button>
         </form>
 
         <div className="my-6 flex items-center">
           <div className="flex-grow border-t border-gray-300"></div>
-          <span className="mx-4 text-sm text-gray-500">Or continue with</span>
+          <span className="mx-4 text-sm text-gray-500">
+            Or continue with
+          </span>
           <div className="flex-grow border-t border-gray-300"></div>
         </div>
 
         <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-          <button type="button" className="flex w-full items-center justify-center gap-3 rounded-xl border py-2 hover:bg-gray-300">
+          <button
+            type="button"
+            className="flex w-full items-center justify-center gap-3 rounded-xl border py-2 hover:bg-gray-300"
+          >
             <FcGoogle size={20} />
             Google
           </button>
 
-          <button type="button" className="flex w-full items-center justify-center gap-3 rounded-xl border py-2 hover:bg-gray-300">
+          <button
+            type="button"
+            className="flex w-full items-center justify-center gap-3 rounded-xl border py-2 hover:bg-gray-300"
+          >
             <FaGithub size={20} />
             GitHub
           </button>
@@ -118,7 +136,12 @@ const Login = () => {
         {/* Sign Up */}
         <div className="mt-6 text-center text-sm text-gray-500">
           Don’t have an account?
-           <Link to="/register" className="ml-2 text-blue-600 hover:underline"> Sign Up </Link>
+          <Link
+            to="/register"
+            className="ml-2 text-blue-600 hover:underline"
+          >
+            Sign Up
+          </Link>
         </div>
 
       </div>
@@ -126,4 +149,4 @@ const Login = () => {
   )
 }
 
-export default Login
+export default Login;

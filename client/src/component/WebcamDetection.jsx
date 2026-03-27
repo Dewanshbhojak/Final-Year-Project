@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useCallback } from "react";
 import Webcam from "react-webcam";
 import * as tf from "@tensorflow/tfjs";
 import { FaceMesh } from "@mediapipe/face_mesh";
@@ -9,71 +9,46 @@ export default function WebcamDetection() {
 
   const sleepFrames = useRef(0);
   const isAlarmPlaying = useRef(false);
-const alarm = useRef(null);
-
-useEffect(() => {
-  alarm.current = new Audio("/alarm.mp3");
-  alarm.current.loop = true;
-  alarm.current.preload = "auto";
-}, []);
+  const alarm = useRef(null);
 
   const [isRunning, setIsRunning] = useState(false);
   const [status, setStatus] = useState("Idle");
-  const audioEnabled = useRef(false);
   const [modelLoaded, setModelLoaded] = useState(false);
 
+  const audioEnabled = useRef(false);
   const token = localStorage.getItem("token");
 
-
+  // 🔊 INIT ALARM
+  useEffect(() => {
+    alarm.current = new Audio("/alarm.mp3");
+    alarm.current.loop = true;
+    alarm.current.preload = "auto";
+  }, []);
 
   // ✅ SEND DATA
   const sendStatus = async (currentStatus) => {
     try {
-      const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+      const API_URL =
+        process.env.REACT_APP_API_URL || "http://localhost:5000";
 
       await fetch(`${API_URL}/api/detection/save`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           status: currentStatus,
-          duration: 1
-        })
+          duration: 1,
+        }),
       });
     } catch (err) {
       console.error("Error saving:", err);
     }
   };
 
-  // ✅ LOAD MODEL (FIXED CDN)
-  useEffect(() => {
-    const loadModel = async () => {
-      await tf.ready();
-
-      faceMesh.current = new FaceMesh({
-        locateFile: (file) =>
-          `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`, // ✅ FIX
-      });
-
-      faceMesh.current.setOptions({
-        maxNumFaces: 1,
-        refineLandmarks: true,
-        minDetectionConfidence: 0.5,
-        minTrackingConfidence: 0.5,
-      });
-
-      faceMesh.current.onResults(onResults);
-
-      setModelLoaded(true); // ✅ mark ready
-    };
-
-    loadModel();
-  }, []);
-
-  // ✅ DETECTION LOGIC
-  const onResults = (results) => {
+  // ✅ DETECTION LOGIC (FIXED with useCallback)
+  const onResults = useCallback((results) => {
     if (!results.multiFaceLandmarks?.length) return;
 
     const landmarks = results.multiFaceLandmarks[0];
@@ -90,7 +65,7 @@ useEffect(() => {
         newStatus = "Sleeping";
 
         if (!isAlarmPlaying.current && audioEnabled.current) {
-          alarm.current.play().catch(err => {
+          alarm.current.play().catch((err) => {
             console.log("Audio blocked:", err);
           });
           isAlarmPlaying.current = true;
@@ -112,20 +87,41 @@ useEffect(() => {
 
     setStatus(newStatus);
     sendStatus(newStatus);
-  };
+  }, []);
 
-  // ✅ DETECTION LOOP (MORE SAFE)
+  // ✅ LOAD MODEL
+  useEffect(() => {
+    const loadModel = async () => {
+      await tf.ready();
+
+      faceMesh.current = new FaceMesh({
+        locateFile: (file) =>
+          `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`,
+      });
+
+      faceMesh.current.setOptions({
+        maxNumFaces: 1,
+        refineLandmarks: true,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5,
+      });
+
+      faceMesh.current.onResults(onResults);
+
+      setModelLoaded(true);
+    };
+
+    loadModel();
+  }, [onResults]);
+
+  // ✅ DETECTION LOOP
   useEffect(() => {
     if (!isRunning || !modelLoaded) return;
 
     const interval = setInterval(async () => {
       const video = webcamRef.current?.video;
 
-      if (
-        video &&
-        video.readyState === 4 &&
-        faceMesh.current
-      ) {
+      if (video && video.readyState === 4 && faceMesh.current) {
         await faceMesh.current.send({ image: video });
       }
     }, 200);
@@ -136,6 +132,7 @@ useEffect(() => {
   // ✅ START
   const startDetection = async () => {
     try {
+      // unlock audio
       await alarm.current.play();
       alarm.current.pause();
       alarm.current.currentTime = 0;
@@ -159,7 +156,7 @@ useEffect(() => {
     if (webcamRef.current?.video?.srcObject) {
       webcamRef.current.video.srcObject
         .getTracks()
-        .forEach(track => track.stop());
+        .forEach((track) => track.stop());
     }
 
     sleepFrames.current = 0;
@@ -168,7 +165,6 @@ useEffect(() => {
 
   return (
     <div className="flex flex-col items-center gap-4">
-
       <Webcam
         ref={webcamRef}
         screenshotFormat="image/jpeg"

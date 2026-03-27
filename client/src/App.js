@@ -7,7 +7,7 @@ import Settings from './pages/Settings';
 import PrivateRoute from './component/PrivateRoute';
 import WebcamDetection from './component/WebcamDetection'; // ✅ FIXED PATH
 
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import {Routes, Route } from 'react-router-dom';
 
 function App() {
   return (
