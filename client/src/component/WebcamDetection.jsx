@@ -25,8 +25,8 @@ export default function WebcamDetection() {
     alarm.current.preload = "auto";
   }, []);
 
-  // ✅ SEND DATA
-  const sendStatus = async (currentStatus) => {
+  // ✅ SEND DATA (FIXED)
+  const sendStatus = useCallback(async (currentStatus) => {
     try {
       const API_URL =
         process.env.REACT_APP_API_URL || "http://localhost:5000";
@@ -45,9 +45,9 @@ export default function WebcamDetection() {
     } catch (err) {
       console.error("Error saving:", err);
     }
-  };
+  }, [token]);
 
-  // ✅ DETECTION LOGIC (FIXED with useCallback)
+  // ✅ DETECTION LOGIC
   const onResults = useCallback((results) => {
     if (!results.multiFaceLandmarks?.length) return;
 
@@ -132,7 +132,6 @@ export default function WebcamDetection() {
   // ✅ START
   const startDetection = async () => {
     try {
-      // unlock audio
       await alarm.current.play();
       alarm.current.pause();
       alarm.current.currentTime = 0;
